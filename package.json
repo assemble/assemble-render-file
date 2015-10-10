@@ -26,10 +26,26 @@
     "vinyl": "^1.0.0"
   },
   "devDependencies": {
+    "assemble": "assemble/assemble#dev",
     "engine-base": "^0.1.2",
     "engine-handlebars": "^0.8.0",
+    "gulp": "^3.9.0",
+    "gulp-istanbul": "^0.10.1",
+    "gulp-jshint": "^1.11.2",
+    "gulp-mocha": "^2.1.3",
+    "jshint-stylish": "^2.0.1",
     "mocha": "*",
     "should": "*"
   },
-  "keywords": []
+  "keywords": [
+    "assemble",
+    "assembleplugin"
+  ],
+  "verb": {
+    "related": {
+      "list": [
+        "assemble"
+      ]
+    }
+  }
 }
