@@ -1,15 +1,18 @@
 'use strict';
 
+require('mocha');
+require('should');
 var assemble = require('assemble');
 var assert = require('assert');
-var should = require('should');
 var renderFile = require('./');
 var path = require('path');
 var app;
 
 describe('app.renderFile()', function() {
   beforeEach(function () {
-    app = assemble();
+    app = assemble()
+      .use(renderFile())
+
     app.engine('hbs', require('engine-handlebars'));
     app.engine('*', require('engine-base'));
 
@@ -105,9 +108,9 @@ describe('app.renderFile()', function() {
       .pipe(app.renderFile())
       .on('error', cb)
       .on('data', function (file) {
-        should.exist(file);
-        should.exist(file.path);
-        should.exist(file.contents);
+        assert(file);
+        assert(file.path);
+        assert(file.contents);
         files.push(file);
       })
       .on('end', function () {
