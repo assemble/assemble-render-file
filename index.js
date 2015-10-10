@@ -34,7 +34,7 @@ module.exports = function(config) {
       }
 
       var collection = app.collection(opts);
-      var File = opts.File || utils.File;
+      var File = opts.File || app.View;
 
       return utils.through.obj(function(file, enc, next) {
         if (file.isNull()) {
