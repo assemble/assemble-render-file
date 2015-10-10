@@ -32,7 +32,9 @@ app.src('*.hbs')
 
 ## Related projects
 
-[assemble](https://www.npmjs.com/package/assemble): Static site generator for Grunt.js, Yeoman and Node.js. Used by Zurb Foundation, Zurb Ink, H5BP/Effeckt,… [more](https://www.npmjs.com/package/assemble) | [homepage](http://assemble.io)
+* [assemble](https://www.npmjs.com/package/assemble): Static site generator for Grunt.js, Yeoman and Node.js. Used by Zurb Foundation, Zurb Ink, H5BP/Effeckt,… [more](https://www.npmjs.com/package/assemble) | [homepage](http://assemble.io)
+* [assemble-loader](https://www.npmjs.com/package/assemble-loader): Assemble plugin (0.6+) for loading globs of views onto custom view collections. Also works with… [more](https://www.npmjs.com/package/assemble-loader) | [homepage](https://github.com/jonschlinkert/assemble-loader)
+* [assemble-streams](https://www.npmjs.com/package/assemble-streams): Assemble plugin that adds convenience methods for working with streams, like `toStream`, which pushes a… [more](https://www.npmjs.com/package/assemble-streams) | [homepage](https://github.com/jonschlinkert/assemble-streams)
 
 ## Running tests
 
