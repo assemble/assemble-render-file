@@ -23,34 +23,39 @@ var utils = require('./utils');
  * @api public
  */
 
-module.exports = function renderFile(app) {
-  return function (locals) {
-    var opts = {};
-    if (locals && !locals.isCollection) {
-      opts = utils.merge({}, app.options, locals);
-    }
-    var collection = app.collection(opts);
-    var File = opts.File || utils.File;
+module.exports = function(config) {
+  return function(app) {
+    config = utils.merge({}, app.options, config);
 
-    return utils.through.obj(function (file, enc, next) {
-      if (file.isNull()) {
-        return cb(null, file);
+    app.define('renderFile', function(locals) {
+      var opts = {};
+      if (locals && !locals.isCollection) {
+        opts = utils.merge({}, config, locals);
       }
 
-      if (!file.isView) {
-        file = collection.view(file);
-      }
+      var collection = app.collection(opts);
+      var File = opts.File || utils.File;
 
-      // run `onLoad` middleware
-      app.handleView('onLoad', file);
+      return utils.through.obj(function(file, enc, next) {
+        if (file.isNull()) {
+          return next(null, file);
+        }
 
-      // create the context to pass to templates
-      var ctx = utils.merge({}, app.cache.data, locals, file.data);
+        if (!file.isView) {
+          file = collection.view(file);
+        }
 
-      // render the file
-      app.render(file, ctx, function (err, res) {
-        if (err) return next(err);
-        next(null, new File(res));
+        // run `onLoad` middleware
+        app.handleView('onLoad', file);
+
+        // create the context to pass to templates
+        var ctx = utils.merge({}, app.cache.data, locals, file.data);
+
+        // render the file
+        app.render(file, ctx, function(err, res) {
+          if (err) return next(err);
+          next(null, new File(res));
+        });
       });
     });
   };
