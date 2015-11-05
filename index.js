@@ -27,7 +27,12 @@ module.exports = function(config) {
   return function(app) {
     config = utils.merge({}, app.options, config);
 
-    app.define('renderFile', function(locals) {
+    app.define('renderFile', function(engine, locals) {
+      if (typeof engine !== 'string') {
+        locals = engine;
+        engine = null;
+      }
+
       var opts = {};
       if (locals && !locals.isCollection) {
         opts = utils.merge({}, config, locals);
@@ -50,11 +55,16 @@ module.exports = function(config) {
 
         // create the context to pass to templates
         var ctx = utils.merge({}, app.cache.data, locals, file.data);
+        ctx.engine = engine || ctx.engine;
 
         // render the file
         app.render(file, ctx, function(err, res) {
           if (err) return next(err);
-          next(null, new File(res));
+          var view = new File(res);
+          if (typeof engine === 'string') {
+            delete view.fn;
+          }
+          next(null, view);
         });
       });
     });
