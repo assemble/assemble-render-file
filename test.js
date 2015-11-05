@@ -2,7 +2,7 @@
 
 require('mocha');
 require('should');
-var assemble = require('assemble');
+var Assemble = require('assemble-core');
 var assert = require('assert');
 var renderFile = require('./');
 var path = require('path');
@@ -10,10 +10,11 @@ var app;
 
 describe('app.renderFile()', function() {
   beforeEach(function () {
-    app = assemble()
+    app = new Assemble()
       .use(renderFile())
 
     app.engine('hbs', require('engine-handlebars'));
+    app.engine('foo', require('engine-base'));
     app.engine('*', require('engine-base'));
 
     app.create('files', {engine: '*'});
@@ -26,6 +27,10 @@ describe('app.renderFile()', function() {
     });
 
     app.helper('title', function () {
+      console.log(this.context)
+      if (this.context.title) {
+        return this.context.title;
+      }
       var view = this.context.view;
       var key = view.key;
       var ctx = this.context[key];
@@ -61,9 +66,9 @@ describe('app.renderFile()', function() {
         files.push(file);
       })
       .on('end', function () {
-        assert(/<h1>a<\/h1>/.test(files[0].contents.toString()));
-        assert(/<h1>b<\/h1>/.test(files[1].contents.toString()));
-        assert(/<h1>c<\/h1>/.test(files[2].contents.toString()));
+        assert(/<h1>a<\/h1>/.test(files[0].content));
+        assert(/<h1>b<\/h1>/.test(files[1].content));
+        assert(/<h1>c<\/h1>/.test(files[2].content));
         done();
       });
   });
@@ -78,9 +83,9 @@ describe('app.renderFile()', function() {
         files.push(file);
       })
       .on('end', function () {
-        assert(/<h2>a<\/h2>/.test(files[0].contents.toString()));
-        assert(/<h2>b<\/h2>/.test(files[1].contents.toString()));
-        assert(/<h2>c<\/h2>/.test(files[2].contents.toString()));
+        assert(/<h2>a<\/h2>/.test(files[0].content));
+        assert(/<h2>b<\/h2>/.test(files[1].content));
+        assert(/<h2>c<\/h2>/.test(files[2].content));
         done();
       });
   });
@@ -95,9 +100,9 @@ describe('app.renderFile()', function() {
         files.push(file);
       })
       .on('end', function () {
-        assert(/<h1>foo<\/h1>/.test(files[0].contents.toString()));
-        assert(/<h1>b<\/h1>/.test(files[1].contents.toString()));
-        assert(/<h1>c<\/h1>/.test(files[2].contents.toString()));
+        assert(/<h1>foo<\/h1>/.test(files[0].content));
+        assert(/<h1>b<\/h1>/.test(files[1].content));
+        assert(/<h1>c<\/h1>/.test(files[2].content));
         done();
       });
   });
@@ -114,9 +119,9 @@ describe('app.renderFile()', function() {
         files.push(file);
       })
       .on('end', function () {
-        assert(/this is a/.test(files[0].contents.toString()));
-        assert(/this is b/.test(files[1].contents.toString()));
-        assert(/this is c/.test(files[2].contents.toString()));
+        assert(/this is a/.test(files[0].content));
+        assert(/this is b/.test(files[1].content));
+        assert(/this is c/.test(files[2].content));
         assert.equal(files.length, 3);
         cb();
       });
@@ -138,3 +143,82 @@ describe('app.renderFile()', function() {
       });
   });
 });
+
+describe('app.renderFile()', function() {
+  beforeEach(function () {
+    app = new Assemble()
+      .use(renderFile())
+
+    var hbs = require('engine-handlebars');
+    hbs.Handlebars.helpers = {};
+
+    app.engine('hbs', hbs);
+    app.engine('foo', require('engine-base'));
+
+    app.data({title: 'foo'});
+  });
+
+  it('should render views with the engine specified on arguments', function (done) {
+    var stream = app.src(path.join(__dirname, 'fixtures/engines/*.hbs'));
+    var files = [];
+
+    stream.pipe(app.renderFile('foo'))
+      .on('error', done)
+      .on('data', function (file) {
+        // console.log(file.content);
+        files.push(file);
+      })
+      .on('end', function () {
+        assert(/<h2>foo<\/h2>/.test(files[0].content));
+        assert(/<h2>foo<\/h2>/.test(files[1].content));
+        assert(/<h2>foo<\/h2>/.test(files[2].content));
+        done();
+      });
+  });
+
+  it('should render views with multiple calls to renderFile', function (done) {
+    var stream = app.src(path.join(__dirname, 'fixtures/engines/*.hbs'));
+    var files = [];
+
+    stream
+      .pipe(app.renderFile('foo'))
+      .pipe(app.renderFile('hbs'))
+      .on('error', done)
+      .on('data', function (file) {
+        // console.log(file.content)
+        files.push(file);
+      })
+      .on('end', function () {
+        assert(/<h1>foo<\/h1>/.test(files[0].content));
+        assert(/<h1>foo<\/h1>/.test(files[1].content));
+        assert(/<h1>foo<\/h1>/.test(files[2].content));
+
+        assert(/<h2>foo<\/h2>/.test(files[0].content));
+        assert(/<h2>foo<\/h2>/.test(files[1].content));
+        assert(/<h2>foo<\/h2>/.test(files[2].content));
+        done();
+      });
+  });
+
+  it('should render views with multiple calls to renderFile and locals', function (done) {
+
+    var stream = app.src(path.join(__dirname, 'fixtures/engines/a.hbs'));
+    var files = [];
+    // console.log(app._.helpers)
+
+    stream
+      .pipe(app.renderFile('foo', {title: 'foo'}))
+      .on('error', done)
+      .pipe(app.renderFile('hbs', {title: 'bar'}))
+      .on('error', done)
+      .on('data', function (file) {
+        files.push(file);
+      })
+      .on('end', function () {
+        assert(/<h1>bar<\/h1>/.test(files[0].content));
+        assert(/<h2>foo<\/h2>/.test(files[0].content));
+        done();
+      });
+  });
+});
+
