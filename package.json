@@ -1,11 +1,13 @@
 {
   "name": "assemble-render-file",
   "description": "Assemble plugin for rendering views in a vinyl pipeline.",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "homepage": "https://github.com/jonschlinkert/assemble-render-file",
   "author": "Jon Schlinkert (https://github.com/jonschlinkert)",
   "repository": "jonschlinkert/assemble-render-file",
-  "bugs": "https://github.com/jonschlinkert/assemble-render-file/issues",
+  "bugs": {
+    "url": "https://github.com/jonschlinkert/assemble-render-file/issues"
+  },
   "license": "MIT",
   "files": [
     "index.js",
@@ -24,14 +26,13 @@
     "through2": "^2.0.0"
   },
   "devDependencies": {
-    "assemble-core": "^0.1.8",
+    "assemble-core": "^0.2.0",
     "engine-base": "^0.1.2",
     "engine-handlebars": "^0.8.0",
     "gulp": "^3.9.0",
-    "gulp-istanbul": "^0.10.1",
-    "gulp-jshint": "^1.11.2",
-    "gulp-mocha": "^2.1.3",
-    "jshint-stylish": "^2.0.1",
+    "gulp-eslint": "^1.1.0",
+    "gulp-istanbul": "^0.10.2",
+    "gulp-mocha": "^2.2.0",
     "mocha": "*",
     "should": "*"
   },
