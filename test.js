@@ -27,7 +27,6 @@ describe('app.renderFile()', function() {
     });
 
     app.helper('title', function () {
-      console.log(this.context)
       if (this.context.title) {
         return this.context.title;
       }

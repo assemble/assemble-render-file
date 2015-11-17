@@ -59,7 +59,12 @@ module.exports = function(config) {
 
         // render the file
         app.render(file, ctx, function(err, res) {
-          if (err) return next(err);
+          if (err) {
+            err.file = file;
+            next(err);
+            return;
+          }
+
           var view = new File(res);
           if (typeof engine === 'string') {
             delete view.fn;
