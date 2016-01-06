@@ -110,19 +110,22 @@ describe('app.renderFile()', function() {
     var stream = app.src(path.join(__dirname, '.*'));
     var files = [];
 
-    // app.engine('noop', function(view, opts, next) {
-    //   next(null, view);
-    // });
+    app.engine('noop', function(view, opts, next) {
+      next(null, view);
+    });
 
     stream.pipe(app.renderFile())
       .on('error', cb)
-      .on('data', function(file) {
-        files.push(file);
-      })
-      .on('end', function() {
-        console.log(files)
-        cb();
-      });
+      .on('finish', cb);
+  });
+
+  it('should pass files through when `engineStrict` is false', function(cb) {
+    var stream = app.src(path.join(__dirname, '.*'));
+
+    app.option('engineStrict', false);
+    stream.pipe(app.renderFile())
+      .on('error', cb)
+      .on('finish', cb);
   });
 
   it('should render the files in a collection', function(cb) {
@@ -183,7 +186,6 @@ describe('app.renderFile()', function() {
     stream.pipe(app.renderFile('foo'))
       .on('error', cb)
       .on('data', function(file) {
-        // console.log(file.content);
         files.push(file);
       })
       .on('end', function() {
@@ -203,7 +205,6 @@ describe('app.renderFile()', function() {
       .pipe(app.renderFile('hbs'))
       .on('error', cb)
       .on('data', function(file) {
-        // console.log(file.content)
         files.push(file);
       })
       .on('end', function() {
@@ -219,10 +220,8 @@ describe('app.renderFile()', function() {
   });
 
   it('should render views with multiple calls to renderFile and locals', function(cb) {
-
     var stream = app.src(path.join(__dirname, 'fixtures/engines/a.hbs'));
     var files = [];
-    // console.log(app._.helpers)
 
     stream
       .pipe(app.renderFile('foo', {title: 'foo'}))

@@ -38,24 +38,26 @@ module.exports = function(config) {
         opts = utils.merge({}, config, locals);
       }
 
-      var collection = app.collection(opts);
-      var File = opts.File || app.View;
+      var View = opts.View || opts.File || app.View;
 
       return utils.through.obj(function(file, enc, next) {
         if (file.isNull()) {
           return next(null, file);
         }
 
-        if (!file.isView) {
-          file = collection.view(file);
-        }
+        if (!file.isView) file = new View(file);
 
         // run `onLoad` middleware
         app.handleView('onLoad', file);
 
         // create the context to pass to templates
         var ctx = utils.merge({}, app.cache.data, locals, file.data);
-        ctx.engine = engine || ctx.engine;
+        ctx.engine = resolveEngine(app, ctx, engine);
+
+        if (!ctx.engine && app.option('engineStrict') === false) {
+          next(null, file);
+          return;
+        }
 
         // render the file
         app.render(file, ctx, function(err, res) {
@@ -65,13 +67,21 @@ module.exports = function(config) {
             return;
           }
 
-          var view = new File(res);
-          if (typeof engine === 'string') {
-            delete view.fn;
-          }
-          next(null, view);
+          if (engine) delete res.fn;
+          next(null, res);
         });
       });
     });
   };
 };
+
+function resolveEngine(app, ctx, engine) {
+  ctx.engine = engine || ctx.engine;
+
+  // allow a `noop` engine to be defined
+  if (!ctx.engine && app.engines['.noop']) {
+    ctx.engine = '.noop';
+  }
+
+  return ctx.engine;
+}
