@@ -7,6 +7,7 @@
 
 'use strict';
 
+var debug = require('debug')('base:assemble:pipeline:render-file');
 var utils = require('./utils');
 
 /**
@@ -33,7 +34,9 @@ module.exports = function(config) {
         engine = null;
       }
 
+      debug('renderFile: engine "%s"', engine);
       var opts = {};
+
       if (locals && !locals.isCollection) {
         opts = utils.merge({}, config, locals);
       }
@@ -48,27 +51,33 @@ module.exports = function(config) {
         if (!file.isView) file = new View(file);
 
         // run `onLoad` middleware
-        app.handleView('onLoad', file);
+        app.handle('onLoad', file, function(err, view) {
+          if (err) return next(err);
 
-        // create the context to pass to templates
-        var ctx = utils.merge({}, app.cache.data, locals, file.data);
-        ctx.engine = resolveEngine(app, ctx, engine);
+          debug('renderFile, preRender: %s', view.relative);
 
-        if (!ctx.engine && app.option('engineStrict') === false) {
-          next(null, file);
-          return;
-        }
+          // create the context to pass to templates
+          var ctx = utils.merge({}, app.cache.data, locals, view.data);
+          ctx.engine = resolveEngine(app, ctx, engine);
 
-        // render the file
-        app.render(file, ctx, function(err, res) {
-          if (err) {
-            err.file = file;
-            next(err);
+          if (!ctx.engine && app.option('engineStrict') === false) {
+            next(null, view);
             return;
           }
 
-          if (engine) delete res.fn;
-          next(null, res);
+          // render the view
+          app.render(view, ctx, function(err, res) {
+            if (err) {
+              err.view = view;
+              next(err);
+              return;
+            }
+
+            debug('renderFile, postRender: %s', view.relative);
+
+            if (engine) delete res.fn;
+            next(null, res);
+          });
         });
       });
     });

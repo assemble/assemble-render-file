@@ -8,6 +8,8 @@ var renderFile = require('./');
 var path = require('path');
 var app;
 
+var cwd = path.resolve.bind(path, __dirname, 'fixtures');
+
 describe('app.renderFile()', function() {
   beforeEach(function() {
     app = new Assemble()
@@ -31,6 +33,10 @@ describe('app.renderFile()', function() {
         return this.context.title;
       }
       var view = this.context.view;
+      var title = view.title || view.data.title;
+      if (title) {
+        return title;
+      }
       var key = view.key;
       var ctx = this.context[key];
       if (ctx && ctx.title) return ctx.title;
@@ -39,7 +45,7 @@ describe('app.renderFile()', function() {
   });
 
   it('should render views from src', function(cb) {
-    var stream = app.src(path.join(__dirname, 'fixtures/*.hbs'));
+    var stream = app.src(cwd('*.hbs'));
     var files = [];
 
     stream.pipe(app.renderFile())
@@ -56,7 +62,7 @@ describe('app.renderFile()', function() {
   });
 
   it('should render views with the engine that matches the file extension', function(cb) {
-    var stream = app.src(path.join(__dirname, 'fixtures/*.hbs'));
+    var stream = app.src(cwd('*.hbs'));
     var files = [];
 
     stream.pipe(app.renderFile())
@@ -73,7 +79,7 @@ describe('app.renderFile()', function() {
   });
 
   it('should render views from src with the engine passed on the opts', function(cb) {
-    var stream = app.src(path.join(__dirname, 'fixtures/*.hbs'));
+    var stream = app.src(cwd('*.hbs'));
     var files = [];
 
     stream.pipe(app.renderFile({engine: '*'}))
@@ -90,7 +96,7 @@ describe('app.renderFile()', function() {
   });
 
   it('should use the context passed on the opts', function(cb) {
-    var stream = app.src(path.join(__dirname, 'fixtures/*.hbs'));
+    var stream = app.src(cwd('*.hbs'));
     var files = [];
 
     stream.pipe(app.renderFile({a: {title: 'foo'}}))
@@ -166,7 +172,7 @@ describe('app.renderFile()', function() {
 });
 
 describe('app.renderFile()', function() {
-  beforeEach(function() {
+  beforeEach(function(cb) {
     app = new Assemble()
       .use(renderFile())
 
@@ -175,12 +181,15 @@ describe('app.renderFile()', function() {
 
     app.engine('hbs', hbs);
     app.engine('foo', require('engine-base'));
+    app.create('partials', {viewType: 'partial'});
+    app.partial('button', {content: 'Click me!'});
 
     app.data({title: 'foo'});
+    cb();
   });
 
   it('should render views with the engine specified on arguments', function(cb) {
-    var stream = app.src(path.join(__dirname, 'fixtures/engines/*.hbs'));
+    var stream = app.src(cwd('engines/*.hbs'));
     var files = [];
 
     stream.pipe(app.renderFile('foo'))
@@ -196,8 +205,42 @@ describe('app.renderFile()', function() {
       });
   });
 
+  it('should render with the same engine multiple times', function(cb) {
+    var stream = app.src(cwd('engines/*.hbs'));
+    var files = [];
+
+    stream
+      .pipe(app.renderFile('foo'))
+      .pipe(app.renderFile('foo'))
+      .pipe(app.renderFile('foo'))
+      .on('error', cb)
+      .on('data', function(file) {
+        files.push(file);
+      })
+      .on('end', function() {
+        assert(/<h2>foo<\/h2>/.test(files[0].content));
+        assert(/<h2>foo<\/h2>/.test(files[1].content));
+        assert(/<h2>foo<\/h2>/.test(files[2].content));
+        cb();
+      });
+  });
+
+  it('should render a template with multiple duplicate partials', function(cb) {
+    var files = [];
+    app.src(cwd('multiple/page.hbs'))
+      .pipe(app.renderFile('hbs'))
+      .on('error', cb)
+      .on('data', function(file) {
+        files.push(file);
+      })
+      .on('end', function() {
+        assert.equal(files[0].content, 'Click me!Click me!Click me!Click me!Click me!');
+        cb();
+      });
+  });
+
   it('should render views with multiple calls to renderFile', function(cb) {
-    var stream = app.src(path.join(__dirname, 'fixtures/engines/*.hbs'));
+    var stream = app.src(cwd('engines/*.hbs'));
     var files = [];
 
     stream
@@ -220,7 +263,7 @@ describe('app.renderFile()', function() {
   });
 
   it('should render views with multiple calls to renderFile and locals', function(cb) {
-    var stream = app.src(path.join(__dirname, 'fixtures/engines/a.hbs'));
+    var stream = app.src(cwd('engines/a.hbs'));
     var files = [];
 
     stream
