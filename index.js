@@ -7,8 +7,8 @@
 
 'use strict';
 
-var debug = require('debug')('base:assemble:pipeline:render-file');
 var utils = require('./utils');
+var debug = utils.debug;
 
 /**
  * Render a vinyl file.
@@ -74,8 +74,6 @@ module.exports = function(config) {
             }
 
             debug('renderFile, postRender: %s', view.relative);
-
-            if (engine) delete res.fn;
             next(null, res);
           });
         });
