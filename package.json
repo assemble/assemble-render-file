@@ -27,7 +27,7 @@
     "through2": "^2.0.1"
   },
   "devDependencies": {
-    "assemble-core": "^0.12.1",
+    "assemble-core": "^0.13.1",
     "engine-base": "^0.1.2",
     "engine-handlebars": "^0.8.0",
     "gulp": "^3.9.1",
