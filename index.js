@@ -51,7 +51,7 @@ module.exports = function(config) {
         if (!file.isView) file = new View(file);
 
         // run `onLoad` middleware
-        app.handle('onLoad', file, function(err, view) {
+        app.handleView('onLoad', file, function(err, view) {
           if (err) return next(err);
 
           debug('renderFile, preRender: %s', view.relative);
