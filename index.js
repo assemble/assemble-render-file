@@ -26,22 +26,27 @@ var debug = utils.debug;
 
 module.exports = function(config) {
   return function(app) {
-    config = utils.merge({}, app.options, config);
+    var opts = utils.merge({}, this.options, config);
 
-    app.define('renderFile', function(engine, locals) {
+    this.define('renderFile', function(engine, locals) {
       if (typeof engine !== 'string') {
         locals = engine;
         engine = null;
       }
 
       debug('renderFile: engine "%s"', engine);
-      var opts = {};
+
+      locals = locals || {};
+      var collection = {};
 
       if (locals && !locals.isCollection) {
-        opts = utils.merge({}, config, locals);
+        opts = utils.merge({}, opts, locals);
+      } else {
+        collection = locals;
+        locals = {};
       }
 
-      var View = opts.View || opts.File || app.View;
+      var View = opts.View || opts.File || collection.View || this.View;
 
       return utils.through.obj(function(file, enc, next) {
         if (file.isNull()) {
@@ -51,14 +56,17 @@ module.exports = function(config) {
         if (!file.isView) file = new View(file);
 
         // run `onLoad` middleware
-        app.handleView('onLoad', file, function(err, view) {
+        app.handleOnce('onLoad', file, function(err, view) {
           if (err) return next(err);
 
           debug('renderFile, preRender: %s', view.relative);
 
           // create the context to pass to templates
-          var ctx = utils.merge({}, app.cache.data, locals, view.data);
+          var ctx = view.context(app.context(locals));
           ctx.engine = resolveEngine(app, ctx, engine);
+
+          // set context on `view` so it's not re-merged by `compile`
+          view._context = ctx;
 
           if (!ctx.engine && app.option('engineStrict') === false) {
             next(null, view);
@@ -89,6 +97,5 @@ function resolveEngine(app, ctx, engine) {
   if (!ctx.engine && app.engines['.noop']) {
     ctx.engine = '.noop';
   }
-
   return ctx.engine;
 }
