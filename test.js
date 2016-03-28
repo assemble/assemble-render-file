@@ -2,7 +2,9 @@
 
 require('mocha');
 require('should');
-var Assemble = require('assemble-core');
+var Templates = require('templates');
+var afs = require('assemble-fs');
+var streams = require('assemble-streams');
 var assert = require('assert');
 var renderFile = require('./');
 var path = require('path');
@@ -12,8 +14,10 @@ var cwd = path.resolve.bind(path, __dirname, 'fixtures');
 
 describe('app.renderFile()', function() {
   beforeEach(function() {
-    app = new Assemble()
+    app = new Templates()
+      .use(streams())
       .use(renderFile())
+      .use(afs())
 
     app.engine('hbs', require('engine-handlebars'));
     app.engine('foo', require('engine-base'));
@@ -173,8 +177,10 @@ describe('app.renderFile()', function() {
 
 describe('app.renderFile()', function() {
   beforeEach(function(cb) {
-    app = new Assemble()
+    app = new Templates()
+      .use(streams())
       .use(renderFile())
+      .use(afs())
 
     var hbs = require('engine-handlebars');
     hbs.Handlebars.helpers = {};
