@@ -62,7 +62,7 @@ module.exports = function(config) {
           debug('renderFile, preRender: %s', view.relative);
 
           // create the context to pass to templates
-          var ctx = view.context(app.context(locals));
+          var ctx = app.context(view, locals);
           ctx.engine = resolveEngine(app, ctx, engine);
 
           // set context on `view` so it's not re-merged by `compile`
