@@ -18,7 +18,7 @@ var utils = require('./utils');
  * ```
  *
  * @name .renderFile
- * @param  {Object} `locals` Optionally locals to pass to the template engine for rendering.
+ * @param  {Object} `locals` Optional locals to pass to the template engine for rendering.
  * @return {Object}
  * @api public
  */
