@@ -8,7 +8,6 @@
 'use strict';
 
 var utils = require('./utils');
-var debug = utils.debug;
 
 /**
  * Render a vinyl file.
@@ -25,8 +24,10 @@ var debug = utils.debug;
  */
 
 module.exports = function(config) {
-  return function(app) {
+  return function plugin(app) {
+    if (!isValidInstance(this)) return;
     var opts = utils.merge({}, this.options, config);
+    var debug = utils.debug;
 
     this.define('renderFile', function(engine, locals) {
       if (typeof engine !== 'string') {
@@ -87,6 +88,8 @@ module.exports = function(config) {
         });
       });
     });
+
+    return plugin;
   };
 };
 
@@ -98,4 +101,14 @@ function resolveEngine(app, ctx, engine) {
     ctx.engine = '.noop';
   }
   return ctx.engine;
+}
+
+function isValidInstance(app) {
+  if (app.isView || app.isItem) {
+    return false;
+  }
+  if (app.isRegistered('assemble-render-file')) {
+    return false;
+  }
+  return true;
 }
