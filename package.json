@@ -1,7 +1,7 @@
 {
   "name": "assemble-render-file",
   "description": "Assemble plugin for rendering views in a vinyl pipeline.",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "homepage": "https://github.com/assemble/assemble-render-file",
   "author": "Jon Schlinkert (https://github.com/jonschlinkert)",
   "repository": "assemble/assemble-render-file",
