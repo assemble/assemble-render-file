@@ -62,20 +62,14 @@ module.exports = function(config) {
 
           debug('renderFile, preRender: %s', view.relative);
 
-          // create the context to pass to templates
-          var ctx = app.context(view, locals);
-          ctx.engine = resolveEngine(app, ctx, engine);
-
-          // set context on `view` so it's not re-merged by `compile`
-          view._context = ctx;
-
-          if (!ctx.engine && app.option('engineStrict') === false) {
+          resolveEngine(app, locals, engine);
+          if (!locals.engine && app.isFalse('engineStrict')) {
             next(null, view);
             return;
           }
 
           // render the view
-          app.render(view, ctx, function(err, res) {
+          app.render(view, locals, function(err, res) {
             if (err) {
               err.view = view;
               next(err);
@@ -93,14 +87,18 @@ module.exports = function(config) {
   };
 };
 
-function resolveEngine(app, ctx, engine) {
-  ctx.engine = engine || ctx.engine;
-
-  // allow a `noop` engine to be defined
-  if (!ctx.engine && app.engines['.noop']) {
-    ctx.engine = '.noop';
+function resolveEngine(app, locals, engine) {
+  if (typeof engine === 'string') {
+    locals.engine = engine;
+    return;
   }
-  return ctx.engine;
+  if (locals.engine) {
+    return;
+  }
+  // allow a `noop` engine to be defined
+  if (app.engines['.noop']) {
+    locals.engine = '.noop';
+  }
 }
 
 function isValidInstance(app) {
