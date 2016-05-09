@@ -48,6 +48,8 @@ module.exports = function(config) {
       }
 
       var View = opts.View || opts.File || collection.View || this.View;
+      var files = [];
+      var handled = [];
 
       return utils.through.obj(function(file, enc, next) {
         if (file.isNull()) {
@@ -55,10 +57,12 @@ module.exports = function(config) {
         }
 
         if (!file.isView) file = new View(file);
+        files.push(file);
 
         // run `onLoad` middleware
         app.handleOnce('onLoad', file, function(err, view) {
           if (err) return next(err);
+          handled.push(view);
 
           debug('renderFile, preRender: %s', view.relative);
 
@@ -70,9 +74,8 @@ module.exports = function(config) {
 
           // render the view
           app.render(view, locals, function(err, res) {
-            if (err) {
-              err.view = view;
-              next(err);
+            if (typeof res === 'undefined' || err) {
+              handleError(app, err, view, files, handled, next);
               return;
             }
 
@@ -86,6 +89,19 @@ module.exports = function(config) {
     return plugin;
   };
 };
+
+function handleError(app, err, view, files, handled, cb) {
+  var last = files[files.length - 1];
+  if (!(err instanceof Error)) {
+    err = new Error(utils.red('view cannot be rendered: ' + last.path));
+  }
+  err.files = files;
+  err.handled = handled;
+  err.view = last;
+  err.path = last.path;
+  app.emit('error', err);
+  cb(err);
+}
 
 function resolveEngine(app, locals, engine) {
   if (typeof engine === 'string') {
