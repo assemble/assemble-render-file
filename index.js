@@ -29,6 +29,14 @@ module.exports = function(config) {
     var opts = utils.merge({}, this.options, config);
     var debug = utils.debug;
 
+    var render = this.render;
+    this.define('render', function() {
+      if (typeof arguments[arguments.length - 1] === 'function') {
+        return render.apply(this, arguments);
+      }
+      return this.renderFile.apply(this, arguments);
+    });
+
     this.define('renderFile', function(engine, locals) {
       if (typeof engine !== 'string') {
         locals = engine;
