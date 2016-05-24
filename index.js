@@ -25,11 +25,12 @@ var utils = require('./utils');
 
 module.exports = function(config) {
   return function plugin(app) {
-    if (!isValidInstance(this)) return;
-    var opts = utils.merge({}, this.options, config);
+    if (!utils.isValid(app)) return;
+
+    var opts = utils.merge({}, app.options, config);
     var debug = utils.debug;
 
-    this.define('renderFile', function(engine, locals) {
+    app.define('renderFile', function(engine, locals) {
       if (typeof engine !== 'string') {
         locals = engine;
         engine = null;
@@ -115,14 +116,4 @@ function resolveEngine(app, locals, engine) {
   if (app.engines['.noop']) {
     locals.engine = '.noop';
   }
-}
-
-function isValidInstance(app) {
-  if (app.isView || app.isItem) {
-    return false;
-  }
-  if (app.isRegistered('assemble-render-file')) {
-    return false;
-  }
-  return true;
 }
