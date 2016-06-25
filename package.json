@@ -74,7 +74,8 @@
       ]
     },
     "reflinks": [
-      "verb"
+      "verb",
+      "verb-readme-generator"
     ],
     "lint": {
       "reflinks": true
