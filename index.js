@@ -25,8 +25,7 @@ var utils = require('./utils');
 
 module.exports = function(config) {
   return function plugin(app) {
-    if (!utils.isValid(app)) return;
-
+    if (!utils.isValid(app, 'assemble-render-file', ['app', 'collection'])) return;
     var opts = utils.merge({}, app.options, config);
     var debug = utils.debug;
 
@@ -94,7 +93,7 @@ module.exports = function(config) {
 function handleError(app, err, view, files, handled, cb) {
   var last = files[files.length - 1];
   if (!(err instanceof Error)) {
-    err = new Error(utils.red('view cannot be rendered: ' + last.path));
+    err = new Error('view cannot be rendered: ' + last.path);
   }
   err.files = files;
   err.handled = handled;
