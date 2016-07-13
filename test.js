@@ -4,6 +4,7 @@ require('mocha');
 require('should');
 var Templates = require('templates');
 var afs = require('assemble-fs');
+var through = require('through2');
 var streams = require('assemble-streams');
 var assert = require('assert');
 var renderFile = require('./');
@@ -207,6 +208,28 @@ describe('render behavior', function() {
         assert(/<h2>foo<\/h2>/.test(files[0].content));
         assert(/<h2>foo<\/h2>/.test(files[1].content));
         assert(/<h2>foo<\/h2>/.test(files[2].content));
+        cb();
+      });
+  });
+
+  it('should not render views with `render: false` defined in front-matter', function(cb) {
+    var stream = app.src(cwd('engines/*.hbs'));
+    var files = [];
+
+    stream
+      .pipe(through.obj(function(file, enc, next) {
+        file.data.render = false;
+        next(null, file);
+      }))
+      .pipe(app.renderFile('foo'))
+      .on('error', cb)
+      .on('data', function(file) {
+        files.push(file);
+      })
+      .on('end', function() {
+        assert(/<h2><%= title %><\/h2>/.test(files[0].content));
+        assert(/<h2><%= title %><\/h2>/.test(files[1].content));
+        assert(/<h2><%= title %><\/h2>/.test(files[2].content));
         cb();
       });
   });

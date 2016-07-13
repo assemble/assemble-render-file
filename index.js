@@ -53,7 +53,13 @@ module.exports = function(config) {
 
       return utils.through.obj(function(file, enc, next) {
         if (file.isNull()) {
-          return next(null, file);
+          next(null, file);
+          return;
+        }
+
+        if (file.data.render === false || opts.render === false) {
+          next(null, file);
+          return;
         }
 
         if (!file.isView) file = new View(file);
