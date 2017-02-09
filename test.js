@@ -50,6 +50,25 @@ describe('app.renderFile()', function() {
   });
 
   it('should render views from src', function(cb) {
+    app.on('_prepare', function(file) {
+      file.prepared = true;
+    });
+
+    var stream = app.src(cwd('*.hbs'));
+    var files = [];
+
+    stream.pipe(app.renderFile())
+      .on('error', cb)
+      .on('data', function(file) {
+        files.push(file);
+      })
+      .on('end', function() {
+        assert(files[0].prepared);
+        cb();
+      });
+  });
+
+  it('should render views from src', function(cb) {
     var stream = app.src(cwd('*.hbs'));
     var files = [];
 

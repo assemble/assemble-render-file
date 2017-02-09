@@ -1,8 +1,8 @@
 /*!
- * assemble-render-file <https://github.com/jonschlinkert/assemble-render-file>
+ * assemble-render-file <https://github.com/assemble/assemble-render-file>
  *
- * Copyright (c) 2015, Jon Schlinkert.
- * Licensed under the MIT License.
+ * Copyright (c) 2015-2017, Jon Schlinkert.
+ * Released under the MIT License.
  */
 
 'use strict';
@@ -49,10 +49,14 @@ module.exports = function(config) {
 
       var View = opts.View || opts.File || collection.View || this.View;
       var files = [];
-      var handled = [];
 
       return utils.through.obj(function(file, enc, next) {
         if (file.isNull()) {
+          next(null, file);
+          return;
+        }
+
+        if (utils.isBinary(file)) {
           next(null, file);
           return;
         }
@@ -65,30 +69,43 @@ module.exports = function(config) {
         if (!file.isView) file = new View(file);
         files.push(file);
 
-        // run `onLoad` middleware
-        app.handleOnce('onLoad', file, function(err, view) {
-          if (err) return next(err);
-          handled.push(view);
-
-          debug('renderFile, preRender: %s', view.relative);
-
-          resolveEngine(app, locals, engine);
-          if (!locals.engine && app.isFalse('engineStrict')) {
-            next(null, view);
+        app.handleOnce('onLoad', file, function(err) {
+          if (err) {
+            handleError(app, err, file, files, next);
             return;
           }
 
-          // render the view
-          app.render(view, locals, function(err, res) {
+          app.emit('_prepare', file);
+          next();
+        });
+
+      }, function(cb) {
+        var self = this;
+
+        // run `onLoad` middleware
+        utils.reduce(files, [], function(acc, file, next) {
+          debug('renderFile, preRender: %s', file.path);
+
+          resolveEngine(app, locals, engine);
+
+          if (!locals.engine && app.isFalse('engineStrict')) {
+            self.push(file);
+            next();
+            return;
+          }
+
+          // render the file
+          app.render(file, locals, function(err, res) {
             if (typeof res === 'undefined' || err) {
-              handleError(app, err, view, files, handled, next);
+              handleError(app, err, file, files, next);
               return;
             }
 
-            debug('renderFile, postRender: %s', view.relative);
-            next(null, res);
+            debug('renderFile, postRender: %s', file.relative);
+            self.push(res);
+            next();
           });
-        });
+        }, cb);
       });
     });
 
@@ -96,17 +113,16 @@ module.exports = function(config) {
   };
 };
 
-function handleError(app, err, view, files, handled, cb) {
+function handleError(app, err, view, files, next) {
   var last = files[files.length - 1];
   if (!(err instanceof Error)) {
     err = new Error('view cannot be rendered: ' + last.path);
   }
   err.files = files;
-  err.handled = handled;
   err.view = last;
   err.path = last.path;
   app.emit('error', err);
-  cb(err);
+  next(err);
 }
 
 function resolveEngine(app, locals, engine) {

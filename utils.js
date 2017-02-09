@@ -8,6 +8,8 @@ require = utils;
  * Utils
  */
 
+require('async-array-reduce', 'reduce');
+require('file-is-binary', 'isBinary');
 require('is-valid-app', 'isValid');
 require('mixin-deep', 'merge');
 require('through2', 'through');
