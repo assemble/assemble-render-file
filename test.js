@@ -24,10 +24,14 @@ describe('app.renderFile()', function() {
     app.engine('foo', require('engine-base'));
     app.engine('*', require('engine-base'));
 
+    app.create('layouts', {viewType: 'layout', engine: 'hbs'});
     app.create('files', {engine: '*'});
+
     app.file('a', {content: 'this is <%= title() %>'});
     app.file('b', {content: 'this is <%= title() %>'});
     app.file('c', {content: 'this is <%= title() %>'});
+
+    app.layout('default', {content: 'Before\n{% body %}\nAfter'});
 
     app.option('renameKey', function(key) {
       return path.basename(key, path.extname(key));
@@ -81,6 +85,22 @@ describe('app.renderFile()', function() {
         assert.equal(files[0].basename, 'a.hbs');
         assert.equal(files[1].basename, 'b.hbs');
         assert.equal(files[2].basename, 'c.hbs');
+        cb();
+      });
+  });
+
+  it('should set the layout to use on the plugin options', function(cb) {
+    var view = app.files.getView('a');
+    var files = [];
+
+    view.toStream()
+      .pipe(app.renderFile({layout: 'default'}))
+      .on('error', cb)
+      .on('data', function(file) {
+        files.push(file);
+      })
+      .on('end', function() {
+        assert.equal(files[0].content, 'Before\nthis is a\nAfter');
         cb();
       });
   });
