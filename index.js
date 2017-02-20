@@ -7,6 +7,7 @@
 
 'use strict';
 
+var PluginError = require('plugin-error');
 var utils = require('./utils');
 
 /**
@@ -51,6 +52,8 @@ module.exports = function(config) {
       var files = [];
 
       return utils.through.obj(function(file, enc, next) {
+        var stream = this;
+
         if (file.isNull()) {
           next(null, file);
           return;
@@ -80,7 +83,7 @@ module.exports = function(config) {
         });
 
       }, function(cb) {
-        var self = this;
+        var stream = this;
 
         // run `onLoad` middleware
         utils.reduce(files, [], function(acc, file, next) {
@@ -89,7 +92,7 @@ module.exports = function(config) {
           resolveEngine(app, locals, engine);
 
           if (!locals.engine && app.isFalse('engineStrict')) {
-            self.push(file);
+            stream.push(file);
             next();
             return;
           }
@@ -102,7 +105,7 @@ module.exports = function(config) {
             }
 
             debug('renderFile, postRender: %s', file.relative);
-            self.push(res);
+            stream.push(res);
             next();
           });
         }, cb);
@@ -115,13 +118,13 @@ module.exports = function(config) {
 
 function handleError(app, err, view, files, next) {
   var last = files[files.length - 1];
-  if (!(err instanceof Error)) {
-    err = new Error('view cannot be rendered: ' + last.path);
+  var errOpts = {fileName: last.path, showStack: true};
+  if (!err || !err.message) {
+    err = 'view cannot be rendered';
   }
+  err = new PluginError('assemble-render-file', err, errOpts);
   err.files = files;
   err.view = last;
-  err.path = last.path;
-  app.emit('error', err);
   next(err);
 }
 
